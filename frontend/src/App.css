@@ -27,11 +27,20 @@ body {
   color: white;
   padding: 1rem 2rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .app-header h1 {
-  margin-bottom: 1rem;
+  margin: 0;
   font-size: 2rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
 }
 
 .main-nav {
@@ -849,12 +858,12 @@ gn Status */
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-left: auto;
 }
 
 .user-name {
   color: white;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .logout-btn {
@@ -865,6 +874,7 @@ gn Status */
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
@@ -872,6 +882,34 @@ gn Status */
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .main-nav {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .user-info {
+    justify-content: center;
+    width: 100%;
+  }
+  
   .admin-stats {
     grid-template-columns: repeat(2, 1fr);
   }
