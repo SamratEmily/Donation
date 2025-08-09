@@ -1,28 +1,58 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CreateCampaign from './components/CreateCampaign';
 import CampaignList from './components/CampaignList';
 import CampaignDetail from './components/CampaignDetail';
-import AdminPanel from './components/AdminPanel';
+import Login from './components/Login';
+import Register from './components/Register';
+import Dashboard from './components/Dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function App() {
-  const [activeTab, setActiveTab] = useState('home');
+const Navigation = () => {
+  const { user, logout, isAuthenticated } = useAuth();
 
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  return (
+    <header className="app-header">
+      <h1>Donation Platform</h1>
+      <nav className="main-nav">
+        <Link to="/">Home</Link>
+        {isAuthenticated ? (
+          <>
+            <Link to="/create">Create Campaign</Link>
+            <Link to="/dashboard">
+              {user?.role === 'admin' ? 'Admin Panel' : 'My Dashboard'}
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
+      </nav>
+      {isAuthenticated && (
+        <div className="user-info">
+          <span className="user-name">Welcome, {user?.name}</span>
+          <button onClick={handleLogout} className="logout-btn">
+            Logout
+          </button>
+        </div>
+      )}
+    </header>
+  );
+};
+
+function AppContent() {
   return (
     <Router>
       <div className="App">
-        <header className="app-header">
-          <h1>Donation Platform</h1>
-          <nav className="main-nav">
-            <Link to="/" onClick={() => setActiveTab('home')}>
-              Home
-            </Link>
-            <Link to="/create" onClick={() => setActiveTab('create')}>
-              Create Campaign
-            </Link>
-          </nav>
-        </header>
+        <Navigation />
 
         <main className="app-main">
           <Routes>
@@ -33,8 +63,21 @@ function App() {
                 }} />
               </div>
             } />
-            <Route path="/create" element={<CreateCampaign />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/campaign/:slug" element={<CampaignDetail />} />
+            
+            {/* Protected Routes */}
+            <Route path="/create" element={
+              <ProtectedRoute>
+                <CreateCampaign />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
 
@@ -43,6 +86,14 @@ function App() {
         </footer>
       </div>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

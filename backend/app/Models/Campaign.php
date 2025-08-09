@@ -16,7 +16,8 @@ class Campaign extends Model
         'current_amount',
         'payment_type',
         'slug',
-        'is_active'
+        'is_active',
+        'user_id'
     ];
 
     protected $casts = [
@@ -30,6 +31,11 @@ class Campaign extends Model
         return $this->hasMany(Donation::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function getProgressPercentageAttribute()
     {
         if ($this->target_amount == 0) return 0;
@@ -39,16 +45,6 @@ class Campaign extends Model
     public function getIsCompletedAttribute()
     {
         return $this->current_amount >= $this->target_amount;
-    }
-    
-    public function closeCampaign()
-    {
-        $this->update(['is_active' => false]);
-    }
-    
-    public function reopenCampaign()
-    {
-        $this->update(['is_active' => true]);
     }
 
     protected static function boot()

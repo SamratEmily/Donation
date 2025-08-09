@@ -10,6 +10,27 @@ const api = axios.create({
   },
 });
 
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const campaignAPI = {
   // Get all campaigns
   getAll: () => api.get('/campaigns'),
@@ -45,6 +66,20 @@ export const donationAPI = {
   
   // Delete donation
   delete: (id) => api.delete(`/donations/${id}`),
+};
+
+export const authAPI = {
+  // Login
+  login: (data) => api.post('/login', data),
+  
+  // Register
+  register: (data) => api.post('/register', data),
+  
+  // Logout
+  logout: () => api.post('/logout'),
+  
+  // Get current user
+  me: () => api.get('/me'),
 };
 
 export default api;

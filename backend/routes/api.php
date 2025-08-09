@@ -4,16 +4,36 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
+use App\Http\Controllers\AuthController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Authentication routes
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
 
-// Campaign routes
-Route::apiResource('campaigns', CampaignController::class);
-Route::get('campaigns/slug/{slug}', [CampaignController::class, 'show']);
-Route::post('campaigns/{id}/close', [CampaignController::class, 'close']);
-Route::post('campaigns/{id}/reopen', [CampaignController::class, 'reopen']);
+// Public campaign routes
+Route::get('campaigns', [CampaignController::class, 'index']);
+Route::get('campaigns/slug/{slug}', [CampaignController::class, 'showBySlug']);
 
-// Donation routes
-Route::apiResource('donations', DonationController::class);
+// Public donation routes
+Route::post('donations', [DonationController::class, 'store']);
+Route::get('donations', [DonationController::class, 'index']);
+
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Auth routes
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('me', [AuthController::class, 'me']);
+    
+    // Campaign management routes
+    Route::get('campaigns/all', [CampaignController::class, 'all']);
+    Route::post('campaigns', [CampaignController::class, 'store']);
+    Route::get('campaigns/{id}', [CampaignController::class, 'show']);
+    Route::put('campaigns/{id}', [CampaignController::class, 'update']);
+    Route::delete('campaigns/{id}', [CampaignController::class, 'destroy']);
+    Route::post('campaigns/{id}/toggle-status', [CampaignController::class, 'toggleStatus']);
+    
+    // Donation management routes
+    Route::get('donations/{id}', [DonationController::class, 'show']);
+    Route::put('donations/{id}', [DonationController::class, 'update']);
+    Route::delete('donations/{id}', [DonationController::class, 'destroy']);
+});

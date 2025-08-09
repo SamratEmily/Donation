@@ -13,10 +13,43 @@ class CampaignController extends Controller
      */
     public function index()
     {
-        $campaigns = Campaign::with('donations')
+        $campaigns = Campaign::with(['donations', 'user'])
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $campaigns
+        ]);
+    }
+
+    /**
+     * Display all campaigns for admin (including inactive ones).
+     */
+    public function all(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        if ($user->isAdmin()) {
+            // Admin can see all campaigns
+            $campaigns = Campaign::with(['donations', 'user'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            // Regular users can only see their own campaigns
+            $campaigns = Campaign::with(['donations', 'user'])
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         return response()->json([
             'success' => true,
@@ -45,19 +78,48 @@ class CampaignController extends Controller
             ], 422);
         }
 
-        $campaign = Campaign::create($request->all());
+        $campaignData = $request->all();
+        
+        // Add user_id if authenticated
+        if ($request->user()) {
+            $campaignData['user_id'] = $request->user()->id;
+        }
+
+        $campaign = Campaign::create($campaignData);
 
         return response()->json([
             'success' => true,
-            'data' => $campaign,
+            'data' => $campaign->load('user'),
             'message' => 'Campaign created successfully'
         ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resource by ID.
      */
-    public function show(string $slug)
+    public function show(string $id)
+    {
+        $campaign = Campaign::with(['donations' => function($query) {
+            $query->where('status', 'completed')->orderBy('created_at', 'desc');
+        }])->find($id);
+
+        if (!$campaign) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Campaign not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $campaign
+        ]);
+    }
+
+    /**
+     * Display the specified resource by slug.
+     */
+    public function showBySlug(string $slug)
     {
         $campaign = Campaign::with(['donations' => function($query) {
             $query->where('status', 'completed')->orderBy('created_at', 'desc');
@@ -90,6 +152,16 @@ class CampaignController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        
+        // Check authorization
+        if (!$user || (!$user->isAdmin() && $campaign->user_id !== $user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to update this campaign'
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'title' => 'string|max:255',
             'description' => 'string',
@@ -105,20 +177,37 @@ class CampaignController extends Controller
             ], 422);
         }
 
-        $campaign->update($request->all());
+        // Only admin can change is_active status
+        $updateData = $request->all();
+        if (!$user->isAdmin() && isset($updateData['is_active'])) {
+            unset($updateData['is_active']);
+        }
+
+        $campaign->update($updateData);
 
         return response()->json([
             'success' => true,
-            'data' => $campaign,
+            'data' => $campaign->load('user'),
             'message' => 'Campaign updated successfully'
         ]);
     }
 
+
+
     /**
-     * Close/deactivate a campaign
+     * Toggle campaign status (admin only)
      */
-    public function close(string $id)
+    public function toggleStatus(Request $request, string $id)
     {
+        $user = $request->user();
+        
+        if (!$user || !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin access required'
+            ], 403);
+        }
+
         $campaign = Campaign::find($id);
 
         if (!$campaign) {
@@ -128,42 +217,19 @@ class CampaignController extends Controller
             ], 404);
         }
 
-        $campaign->closeCampaign();
+        $campaign->update(['is_active' => !$campaign->is_active]);
 
         return response()->json([
             'success' => true,
-            'data' => $campaign,
-            'message' => 'Campaign closed successfully'
-        ]);
-    }
-
-    /**
-     * Reopen/reactivate a campaign
-     */
-    public function reopen(string $id)
-    {
-        $campaign = Campaign::find($id);
-
-        if (!$campaign) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Campaign not found'
-            ], 404);
-        }
-
-        $campaign->reopenCampaign();
-
-        return response()->json([
-            'success' => true,
-            'data' => $campaign,
-            'message' => 'Campaign reopened successfully'
+            'data' => $campaign->load('user'),
+            'message' => 'Campaign status updated successfully'
         ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $campaign = Campaign::find($id);
 
@@ -172,6 +238,16 @@ class CampaignController extends Controller
                 'success' => false,
                 'message' => 'Campaign not found'
             ], 404);
+        }
+
+        $user = $request->user();
+        
+        // Check authorization
+        if (!$user || (!$user->isAdmin() && $campaign->user_id !== $user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to delete this campaign'
+            ], 403);
         }
 
         $campaign->delete();
