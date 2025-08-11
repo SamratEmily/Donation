@@ -19,25 +19,23 @@ const Navigation = () => {
 
   return (
     <header className="app-header">
-      <div className="header-left">
-        <h1>Donation Platform</h1>
-        <nav className="main-nav">
-          <Link to="/">Home</Link>
-          {isAuthenticated ? (
-            <>
-              <Link to="/create">Create Campaign</Link>
-              <Link to="/dashboard">
-                {user?.role === "admin" ? "Admin Panel" : "My Dashboard"}
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
-            </>
-          )}
-        </nav>
-      </div>
+      <h1>Donation Platform</h1>
+      <nav className="main-nav">
+        <Link to="/">Home</Link>
+        {isAuthenticated ? (
+          <>
+            <Link to="/create">Create Campaign</Link>
+            <Link to="/dashboard">
+              {user?.role === "admin" ? "Admin Panel" : "My Dashboard"}
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
+      </nav>
       {isAuthenticated && (
         <div className="user-info">
           <span className="user-name">Welcome, {user?.name}</span>

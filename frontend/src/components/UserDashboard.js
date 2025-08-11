@@ -95,7 +95,7 @@ const UserDashboard = () => {
     if (campaigns.length > 0) {
       fetchStats();
     }
-  }, [campaigns, donations]);
+  }, [campaigns, donations, fetchStats]);
 
   const formatAmount = (amount) => {
     return new Intl.NumberFormat("en-BD", {
@@ -115,9 +115,30 @@ const UserDashboard = () => {
     });
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert("Link copied to clipboard!");
+  const toggleCampaignStatus = async (campaignId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/campaigns/${campaignId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          is_active: !campaigns.find(c => c.id === campaignId)?.is_active
+        })
+      });
+      
+      if (response.ok) {
+        alert('Campaign status updated successfully');
+        // Refresh campaigns list
+        fetchAllCampaigns();
+      } else {
+        alert('Failed to update campaign status');
+      }
+    } catch (err) {
+      alert('Failed to update campaign status');
+    }
   };
 
   if (loading) return <div className="loading">Loading your dashboard...</div>;
@@ -183,6 +204,7 @@ const UserDashboard = () => {
               <thead>
                 <tr>
                   <th>Campaign</th>
+                  <th>Creator</th>
                   <th>Progress</th>
                   <th>Status</th>
                   <th>Created</th>
@@ -203,6 +225,13 @@ const UserDashboard = () => {
                           <strong>{campaign.title}</strong>
                           <br />
                           <small>{campaign.slug}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <strong>{campaign.creator_name}</strong>
+                          <br />
+                          <small>{campaign.creator_email}</small>
                         </div>
                       </td>
                       <td>
@@ -243,15 +272,11 @@ const UserDashboard = () => {
                       <td>
                         <div className="action-buttons">
                           <button
-                            className="copy-btn"
-                            onClick={() =>
-                              copyToClipboard(
-                                `${window.location.origin}/campaign/${campaign.slug}`
-                              )
-                            }
-                            title="Copy campaign link"
+                            className={`toggle-btn ${campaign.is_active ? 'deactivate' : 'activate'}`}
+                            onClick={() => toggleCampaignStatus(campaign.id)}
+                            title={campaign.is_active ? 'Deactivate campaign' : 'Activate campaign'}
                           >
-                            📋 Copy Link
+                            {campaign.is_active ? '🔒 Deactivate' : '🔓 Activate'}
                           </button>
                           <button
                             className="view-btn"

@@ -30,17 +30,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 2rem;
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 2rem;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 3rem;
+  white-space: nowrap;
 }
 
 .main-nav {
@@ -883,31 +879,27 @@ gn Status */
 
 @media (max-width: 768px) {
   .app-header {
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 1rem;
     padding: 1rem;
-  }
-  
-  .header-left {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-    width: 100%;
+    justify-content: center;
   }
   
   .app-header h1 {
     font-size: 1.5rem;
+    order: 1;
   }
   
   .main-nav {
     gap: 1rem;
     flex-wrap: wrap;
     justify-content: center;
+    order: 2;
   }
   
   .user-info {
     justify-content: center;
-    width: 100%;
+    order: 3;
   }
   
   .admin-stats {

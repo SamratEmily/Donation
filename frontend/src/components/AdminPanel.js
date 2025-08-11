@@ -113,11 +113,6 @@ const AdminPanel = () => {
     });
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert("Link copied to clipboard!");
-  };
-
   const toggleCampaignStatus = async (campaignId) => {
     try {
       const response = await fetch(`http://localhost:8000/api/campaigns/${campaignId}/toggle-status`, {
@@ -265,17 +260,6 @@ const AdminPanel = () => {
                           title={campaign.is_active ? 'Deactivate campaign' : 'Activate campaign'}
                         >
                           {campaign.is_active ? '🔒 Deactivate' : '🔓 Activate'}
-                        </button>
-                        <button
-                          className="copy-btn"
-                          onClick={() =>
-                            copyToClipboard(
-                              `${window.location.origin}/campaign/${campaign.slug}`
-                            )
-                          }
-                          title="Copy campaign link"
-                        >
-                          📋 Copy Link
                         </button>
                         <button
                           className="view-btn"
