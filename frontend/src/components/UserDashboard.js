@@ -19,18 +19,9 @@ const UserDashboard = () => {
 
   const fetchAllCampaigns = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/campaigns/all", {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setCampaigns(data.data);
-        }
+      const response = await campaignAPI.getAllWithAuth();
+      if (response.data.success) {
+        setCampaigns(response.data.data);
       }
     } catch (err) {
       console.error("Failed to load campaigns:", err);
@@ -115,27 +106,53 @@ const UserDashboard = () => {
     });
   };
 
-  const toggleCampaignStatus = async (campaignId) => {
-    try {
-      const response = await fetch(`http://localhost:8000/api/campaigns/${campaignId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          is_active: !campaigns.find(c => c.id === campaignId)?.is_active
-        })
-      });
-      
-      if (response.ok) {
-        alert('Campaign status updated successfully');
-        // Refresh campaigns list
-        fetchAllCampaigns();
-      } else {
-        alert('Failed to update campaign status');
+  const promptForTargetAmount = (currentAmount) => {
+    const response = window.prompt(
+      "Enter a new target amount for this campaign (leave blank to keep current amount):",
+      currentAmount ? String(currentAmount) : ""
+    );
+
+    if (response === null) {
+      return null; // User cancelled
+    }
+
+    const trimmed = response.trim();
+
+    if (trimmed === "") {
+      return {};
+    }
+
+    const parsed = parseFloat(trimmed);
+
+    if (Number.isNaN(parsed) || parsed < 0) {
+      alert("Please provide a valid number for the target amount.");
+      return false;
+    }
+
+    return { target_amount: parsed };
+  };
+
+  const toggleCampaignStatus = async (campaign) => {
+    let payload = {};
+
+    if (!campaign.is_active) {
+      const result = promptForTargetAmount(campaign.target_amount);
+
+      if (result === null) {
+        return; // cancel
       }
+
+      if (result === false) {
+        return; // invalid input handled
+      }
+
+      payload = result;
+    }
+
+    try {
+      await campaignAPI.toggleStatus(campaign.id, payload);
+      alert('Campaign status updated successfully');
+      fetchAllCampaigns();
     } catch (err) {
       alert('Failed to update campaign status');
     }
@@ -232,6 +249,12 @@ const UserDashboard = () => {
                           <strong>{campaign.creator_name}</strong>
                           <br />
                           <small>{campaign.creator_email}</small>
+                          {campaign.creator_phone && (
+                            <>
+                              <br />
+                              <small>{campaign.creator_phone}</small>
+                            </>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -273,7 +296,7 @@ const UserDashboard = () => {
                         <div className="action-buttons">
                           <button
                             className={`toggle-btn ${campaign.is_active ? 'deactivate' : 'activate'}`}
-                            onClick={() => toggleCampaignStatus(campaign.id)}
+                            onClick={() => toggleCampaignStatus(campaign)}
                             title={campaign.is_active ? 'Deactivate campaign' : 'Activate campaign'}
                           >
                             {campaign.is_active ? '🔒 Deactivate' : '🔓 Activate'}

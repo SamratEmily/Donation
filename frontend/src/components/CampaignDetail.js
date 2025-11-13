@@ -95,6 +95,9 @@ const CampaignDetail = () => {
             <h3>Organizer</h3>
             <p><strong>Name:</strong> {campaign.creator_name}</p>
             <p><strong>Email:</strong> {campaign.creator_email}</p>
+            {campaign.creator_phone && (
+              <p><strong>Phone:</strong> {campaign.creator_phone}</p>
+            )}
             <p><strong>Preferred Payment:</strong> {campaign.payment_type.toUpperCase()}</p>
           </div>
 

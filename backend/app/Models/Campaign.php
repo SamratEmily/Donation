@@ -12,6 +12,7 @@ class Campaign extends Model
         'description',
         'creator_name',
         'creator_email',
+        'creator_phone',
         'target_amount',
         'current_amount',
         'payment_type',
@@ -25,6 +26,8 @@ class Campaign extends Model
         'current_amount' => 'decimal:2',
         'is_active' => 'boolean'
     ];
+
+    protected $appends = ['progress_percentage', 'is_completed', 'status'];
 
     public function donations()
     {
@@ -45,6 +48,11 @@ class Campaign extends Model
     public function getIsCompletedAttribute()
     {
         return $this->current_amount >= $this->target_amount;
+    }
+
+    public function getStatusAttribute()
+    {
+        return $this->is_active ? 'Active' : 'Inactive';
     }
 
     protected static function boot()

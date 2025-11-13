@@ -35,6 +35,9 @@ export const campaignAPI = {
   // Get all campaigns
   getAll: () => api.get('/campaigns'),
   
+  // Get campaigns requiring authentication (admin/all users)
+  getAllWithAuth: () => api.get('/campaigns/all'),
+  
   // Get campaign by slug
   getBySlug: (slug) => api.get(`/campaigns/slug/${slug}`),
   
@@ -46,6 +49,9 @@ export const campaignAPI = {
   
   // Delete campaign
   delete: (id) => api.delete(`/campaigns/${id}`),
+
+  // Toggle campaign status
+  toggleStatus: (id, data = {}) => api.post(`/campaigns/${id}/toggle-status`, data),
 };
 
 export const donationAPI = {

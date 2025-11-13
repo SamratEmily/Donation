@@ -67,6 +67,7 @@ class CampaignController extends Controller
             'description' => 'required|string',
             'creator_name' => 'required|string|max:255',
             'creator_email' => 'required|email|max:255',
+            'creator_phone' => 'required|string|max:20',
             'target_amount' => 'required|numeric|min:0',
             'payment_type' => 'required|in:bkash,nagad,rocket,bank'
         ]);
@@ -167,7 +168,8 @@ class CampaignController extends Controller
             'description' => 'string',
             'target_amount' => 'numeric|min:0',
             'payment_type' => 'in:bkash,nagad,rocket,bank',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'creator_phone' => 'string|max:20'
         ]);
 
         if ($validator->fails()) {
@@ -178,10 +180,14 @@ class CampaignController extends Controller
         }
 
         // Only admin can change is_active status
-        $updateData = $request->all();
-        if (!$user->isAdmin() && isset($updateData['is_active'])) {
-            unset($updateData['is_active']);
-        }
+        $updateData = $request->only([
+            'title',
+            'description',
+            'target_amount',
+            'payment_type',
+            'is_active',
+            'creator_phone'
+        ]);
 
         $campaign->update($updateData);
 
@@ -195,17 +201,17 @@ class CampaignController extends Controller
 
 
     /**
-     * Toggle campaign status (admin only)
+     * Toggle campaign status (owner or admin)
      */
     public function toggleStatus(Request $request, string $id)
     {
         $user = $request->user();
         
-        if (!$user || !$user->isAdmin()) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Admin access required'
-            ], 403);
+                'message' => 'Authentication required'
+            ], 401);
         }
 
         $campaign = Campaign::find($id);
@@ -217,7 +223,36 @@ class CampaignController extends Controller
             ], 404);
         }
 
-        $campaign->update(['is_active' => !$campaign->is_active]);
+        // Check if user is admin or campaign owner
+        if (!$user->isAdmin() && $campaign->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to toggle this campaign status'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'target_amount' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $newStatus = !$campaign->is_active;
+
+        $campaign->is_active = $newStatus;
+
+        $validated = $validator->validated();
+
+        if ($newStatus && array_key_exists('target_amount', $validated) && $validated['target_amount'] !== null) {
+            $campaign->target_amount = $validated['target_amount'];
+        }
+
+        $campaign->save();
 
         return response()->json([
             'success' => true,

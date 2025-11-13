@@ -88,6 +88,12 @@ body {
   transition: border-color 0.3s;
 }
 
+.form-group label .required-indicator {
+  color: #e74c3c;
+  margin-left: 0.25rem;
+  font-weight: bold;
+}
+
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {

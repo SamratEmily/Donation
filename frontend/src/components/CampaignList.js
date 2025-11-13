@@ -69,6 +69,9 @@ const CampaignList = ({ onCampaignSelect }) => {
                 <div className="campaign-meta">
                   <p><strong>Organizer:</strong> {campaign.creator_name}</p>
                   <p><strong>Payment Method:</strong> {campaign.payment_type.toUpperCase()}</p>
+                  {campaign.creator_phone && (
+                    <p><strong>Phone:</strong> {campaign.creator_phone}</p>
+                  )}
                 </div>
               </div>
               

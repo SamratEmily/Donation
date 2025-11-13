@@ -7,6 +7,7 @@ const CreateCampaign = ({ onCampaignCreated }) => {
     description: '',
     creator_name: '',
     creator_email: '',
+    creator_phone: '',
     target_amount: '',
     payment_type: 'bkash'
   });
@@ -34,6 +35,7 @@ const CreateCampaign = ({ onCampaignCreated }) => {
           description: '',
           creator_name: '',
           creator_email: '',
+          creator_phone: '',
           target_amount: '',
           payment_type: 'bkash'
         });
@@ -55,7 +57,10 @@ const CreateCampaign = ({ onCampaignCreated }) => {
       
       <form onSubmit={handleSubmit} className="campaign-form">
         <div className="form-group">
-          <label htmlFor="title">Campaign Title:</label>
+          <label htmlFor="title">
+            Campaign Title
+            <span className="required-indicator">*</span>
+          </label>
           <input
             type="text"
             id="title"
@@ -68,7 +73,10 @@ const CreateCampaign = ({ onCampaignCreated }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="description">Description:</label>
+          <label htmlFor="description">
+            Description
+            <span className="required-indicator">*</span>
+          </label>
           <textarea
             id="description"
             name="description"
@@ -81,7 +89,10 @@ const CreateCampaign = ({ onCampaignCreated }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="creator_name">Your Name:</label>
+          <label htmlFor="creator_name">
+            Your Name
+            <span className="required-indicator">*</span>
+          </label>
           <input
             type="text"
             id="creator_name"
@@ -94,7 +105,10 @@ const CreateCampaign = ({ onCampaignCreated }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="creator_email">Your Email:</label>
+          <label htmlFor="creator_email">
+            Your Email
+            <span className="required-indicator">*</span>
+          </label>
           <input
             type="email"
             id="creator_email"
@@ -107,7 +121,26 @@ const CreateCampaign = ({ onCampaignCreated }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="target_amount">Target Amount (BDT):</label>
+          <label htmlFor="creator_phone">
+            Phone Number
+            <span className="required-indicator">*</span>
+          </label>
+          <input
+            type="tel"
+            id="creator_phone"
+            name="creator_phone"
+            value={formData.creator_phone}
+            onChange={handleChange}
+            required
+            placeholder="+8801XXXXXXXXX"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="target_amount">
+            Target Amount (BDT)
+            <span className="required-indicator">*</span>
+          </label>
           <input
             type="number"
             id="target_amount"
@@ -121,7 +154,10 @@ const CreateCampaign = ({ onCampaignCreated }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="payment_type">Preferred Payment Method:</label>
+          <label htmlFor="payment_type">
+            Preferred Payment Method
+            <span className="required-indicator">*</span>
+          </label>
           <select
             id="payment_type"
             name="payment_type"
