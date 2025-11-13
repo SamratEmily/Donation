@@ -108,7 +108,7 @@ const Register = () => {
             />
           </div>
 
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="role">Account Type:</label>
             <select
               id="role"
@@ -120,7 +120,7 @@ const Register = () => {
               <option value="user">Regular User</option>
               <option value="admin">Administrator</option>
             </select>
-          </div>
+          </div> */}
 
           <button type="submit" disabled={loading} className="submit-btn">
             {loading ? "Creating Account..." : "Register"}
