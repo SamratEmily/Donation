@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { campaignAPI, donationAPI } from "../services/api";
+import StatsOverview from "./StatsOverview";
+import CampaignTable from "./CampaignTable";
+import DonationTable from "./DonationTable";
 
 const AdminPanel = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -80,24 +83,6 @@ const AdminPanel = () => {
     fetchAllData();
   }, []);
 
-  const formatAmount = (amount) => {
-    return new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const promptForTargetAmount = (currentAmount) => {
     const response = window.prompt(
       "Enter a new target amount for this campaign (leave blank to keep current amount):",
@@ -158,24 +143,7 @@ const AdminPanel = () => {
       <h2>Admin Dashboard</h2>
 
       {/* Stats Overview */}
-      <div className="admin-stats">
-        <div className="stat-card">
-          <h3>Total Campaigns</h3>
-          <div className="stat-number">{stats.totalCampaigns}</div>
-        </div>
-        <div className="stat-card">
-          <h3>Active Campaigns</h3>
-          <div className="stat-number">{stats.activeCampaigns}</div>
-        </div>
-        <div className="stat-card">
-          <h3>Total Donations</h3>
-          <div className="stat-number">{stats.totalDonations}</div>
-        </div>
-        <div className="stat-card">
-          <h3>Total Amount Raised</h3>
-          <div className="stat-number">{formatAmount(stats.totalAmount)}</div>
-        </div>
-      </div>
+      <StatsOverview stats={stats} />
 
       {/* Tab Navigation */}
       <div className="admin-tabs">
@@ -195,172 +163,19 @@ const AdminPanel = () => {
 
       {/* Campaigns Tab */}
       {activeTab === "campaigns" && (
-        <div className="campaigns-table">
-          <h3>All Campaigns</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Campaign</th>
-                <th>Creator</th>
-                <th>Progress</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {campaigns.map((campaign) => {
-                const progressPercentage =
-                  (campaign.current_amount / campaign.target_amount) * 100;
-                const isCompleted =
-                  campaign.current_amount >= campaign.target_amount;
-
-                return (
-                  <tr key={campaign.id}>
-                    <td>
-                      <div className="campaign-info">
-                        <strong>{campaign.title}</strong>
-                        <br />
-                        <small>{campaign.slug}</small>
-                      </div>
-                    </td>
-                    <td>
-                      <div>
-                        <strong>{campaign.creator_name}</strong>
-                        <br />
-                        <small>{campaign.creator_email}</small>
-                        {campaign.creator_phone && (
-                          <>
-                            <br />
-                            <small>{campaign.creator_phone}</small>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="progress-info">
-                        <div className="progress-bar small">
-                          <div
-                            className="progress-fill"
-                            style={{
-                              width: `${Math.min(100, progressPercentage)}%`,
-                              backgroundColor: isCompleted ? "#28a745" : "",
-                            }}
-                          ></div>
-                        </div>
-                        <div className="amounts-small">
-                          {formatAmount(campaign.current_amount)} /{" "}
-                          {formatAmount(campaign.target_amount)}
-                        </div>
-                        <div className="percentage">
-                          {progressPercentage.toFixed(1)}%
-                          {isCompleted && (
-                            <span className="completed-badge">✓ Completed</span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span
-                        className={`status-badge ${
-                          campaign.is_active ? "active" : "inactive"
-                        }`}
-                      >
-                        {campaign.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td>
-                      <small>{formatDate(campaign.created_at)}</small>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          className={`toggle-btn ${campaign.is_active ? 'deactivate' : 'activate'}`}
-                          onClick={() => toggleCampaignStatus(campaign)}
-                          title={campaign.is_active ? 'Deactivate campaign' : 'Activate campaign'}
-                        >
-                          {campaign.is_active ? '🔒 Deactivate' : '🔓 Activate'}
-                        </button>
-                        <button
-                          className="view-btn"
-                          onClick={() =>
-                            window.open(`/campaign/${campaign.slug}`, "_blank")
-                          }
-                          title="View campaign"
-                        >
-                          👁️ View
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <CampaignTable 
+          campaigns={campaigns} 
+          title="All Campaigns" 
+          onToggleStatus={toggleCampaignStatus}
+        />
       )}
 
       {/* Donations Tab */}
       {activeTab === "donations" && (
-        <div className="donations-table">
-          <h3>Recent Donations</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Donor</th>
-                <th>Campaign</th>
-                <th>Amount</th>
-                <th>Payment Method</th>
-                <th>Date</th>
-                <th>Message</th>
-              </tr>
-            </thead>
-            <tbody>
-              {donations.slice(0, 50).map((donation) => (
-                <tr key={donation.id}>
-                  <td>
-                    <div>
-                      <strong>{donation.donor_name}</strong>
-                      {donation.donor_email && (
-                        <>
-                          <br />
-                          <small>{donation.donor_email}</small>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div>
-                      <strong>{donation.campaign?.title || "N/A"}</strong>
-                    </div>
-                  </td>
-                  <td>
-                    <strong className="donation-amount">
-                      {formatAmount(donation.amount)}
-                    </strong>
-                  </td>
-                  <td>
-                    <span className="payment-method">
-                      {donation.payment_method.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>
-                    <small>{formatDate(donation.created_at)}</small>
-                  </td>
-                  <td>
-                    {donation.message ? (
-                      <div className="donation-message">
-                        "{donation.message}"
-                      </div>
-                    ) : (
-                      <small className="no-message">No message</small>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DonationTable 
+          donations={donations} 
+          title="Recent Donations" 
+        />
       )}
     </div>
   );

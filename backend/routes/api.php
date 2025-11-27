@@ -27,10 +27,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Campaign management routes
     Route::get('campaigns/all', [CampaignController::class, 'all']);
     Route::post('campaigns', [CampaignController::class, 'store']);
-    Route::get('campaigns/{id}', [CampaignController::class, 'show']);
-    Route::put('campaigns/{id}', [CampaignController::class, 'update']);
-    Route::delete('campaigns/{id}', [CampaignController::class, 'destroy']);
-    Route::post('campaigns/{id}/toggle-status', [CampaignController::class, 'toggleStatus']);
+    Route::get('campaigns/{campaign}', [CampaignController::class, 'show']);
+    Route::put('campaigns/{campaign}', [CampaignController::class, 'update']);
+    Route::delete('campaigns/{campaign}', [CampaignController::class, 'destroy']);
+    Route::post('campaigns/{campaign}/toggle-status', [CampaignController::class, 'toggleStatus']);
     
     // Donation management routes
     Route::get('donations/{id}', [DonationController::class, 'show']);

@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import CreateCampaign from "./components/CreateCampaign";
@@ -48,6 +48,20 @@ const Navigation = () => {
   );
 };
 
+const Home = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div>
+      <CampaignList
+        onCampaignSelect={(campaign) => {
+          navigate(`/campaign/${campaign.slug}`);
+        }}
+      />
+    </div>
+  );
+};
+
 function AppContent() {
   return (
     <Router>
@@ -56,18 +70,7 @@ function AppContent() {
 
         <main className="app-main">
           <Routes>
-            <Route
-              path="/"
-              element={
-                <div>
-                  <CampaignList
-                    onCampaignSelect={(campaign) => {
-                      window.location.href = `/campaign/${campaign.slug}`;
-                    }}
-                  />
-                </div>
-              }
-            />
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/campaign/:slug" element={<CampaignDetail />} />

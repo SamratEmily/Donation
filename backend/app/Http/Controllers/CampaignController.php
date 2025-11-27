@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Http\Requests\StoreCampaignRequest;
+use App\Http\Requests\UpdateCampaignRequest;
+use App\Http\Resources\CampaignResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class CampaignController extends Controller
 {
@@ -18,9 +20,8 @@ class CampaignController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaigns
+        return CampaignResource::collection($campaigns)->additional([
+            'success' => true
         ]);
     }
 
@@ -51,35 +52,17 @@ class CampaignController extends Controller
                 ->get();
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaigns
+        return CampaignResource::collection($campaigns)->additional([
+            'success' => true
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCampaignRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'creator_name' => 'required|string|max:255',
-            'creator_email' => 'required|email|max:255',
-            'creator_phone' => 'required|string|max:20',
-            'target_amount' => 'required|numeric|min:0',
-            'payment_type' => 'required|in:bkash,nagad,rocket,bank'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $campaignData = $request->all();
+        $campaignData = $request->validated();
         
         // Add user_id if authenticated
         if ($request->user()) {
@@ -88,32 +71,24 @@ class CampaignController extends Controller
 
         $campaign = Campaign::create($campaignData);
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaign->load('user'),
-            'message' => 'Campaign created successfully'
-        ], 201);
+        return (new CampaignResource($campaign->load('user')))
+            ->additional([
+                'success' => true,
+                'message' => 'Campaign created successfully'
+            ]);
     }
 
     /**
      * Display the specified resource by ID.
      */
-    public function show(string $id)
+    public function show(Campaign $campaign)
     {
-        $campaign = Campaign::with(['donations' => function($query) {
+        $campaign->load(['donations' => function($query) {
             $query->where('status', 'completed')->orderBy('created_at', 'desc');
-        }])->find($id);
+        }]);
 
-        if (!$campaign) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Campaign not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $campaign
+        return (new CampaignResource($campaign))->additional([
+            'success' => true
         ]);
     }
 
@@ -133,26 +108,16 @@ class CampaignController extends Controller
             ], 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaign
+        return (new CampaignResource($campaign))->additional([
+            'success' => true
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateCampaignRequest $request, Campaign $campaign)
     {
-        $campaign = Campaign::find($id);
-
-        if (!$campaign) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Campaign not found'
-            ], 404);
-        }
-
         $user = $request->user();
         
         // Check authorization
@@ -163,39 +128,25 @@ class CampaignController extends Controller
             ], 403);
         }
 
-        $validator = Validator::make($request->all(), [
-            'title' => 'string|max:255',
-            'description' => 'string',
-            'target_amount' => 'numeric|min:0',
-            'payment_type' => 'in:bkash,nagad,rocket,bank',
-            'is_active' => 'boolean',
-            'creator_phone' => 'string|max:20'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         // Only admin can change is_active status
-        $updateData = $request->only([
-            'title',
-            'description',
-            'target_amount',
-            'payment_type',
-            'is_active',
-            'creator_phone'
-        ]);
+        $updateData = $request->validated();
+        
+        // Filter allowed fields if not admin? 
+        // The original code didn't explicitly filter based on role for fields, just is_active.
+        // But the validator in UpdateCampaignRequest includes is_active.
+        // We should probably check if user is admin before allowing is_active change.
+        
+        if (!$user->isAdmin() && isset($updateData['is_active'])) {
+             unset($updateData['is_active']);
+        }
 
         $campaign->update($updateData);
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaign->load('user'),
-            'message' => 'Campaign updated successfully'
-        ]);
+        return (new CampaignResource($campaign->load('user')))
+            ->additional([
+                'success' => true,
+                'message' => 'Campaign updated successfully'
+            ]);
     }
 
 
@@ -203,7 +154,7 @@ class CampaignController extends Controller
     /**
      * Toggle campaign status (owner or admin)
      */
-    public function toggleStatus(Request $request, string $id)
+    public function toggleStatus(Request $request, Campaign $campaign)
     {
         $user = $request->user();
         
@@ -214,15 +165,6 @@ class CampaignController extends Controller
             ], 401);
         }
 
-        $campaign = Campaign::find($id);
-
-        if (!$campaign) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Campaign not found'
-            ], 404);
-        }
-
         // Check if user is admin or campaign owner
         if (!$user->isAdmin() && $campaign->user_id !== $user->id) {
             return response()->json([
@@ -231,22 +173,13 @@ class CampaignController extends Controller
             ], 403);
         }
 
-        $validator = Validator::make($request->all(), [
+        $validated = $request->validate([
             'target_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         $newStatus = !$campaign->is_active;
 
         $campaign->is_active = $newStatus;
-
-        $validated = $validator->validated();
 
         if ($newStatus && array_key_exists('target_amount', $validated) && $validated['target_amount'] !== null) {
             $campaign->target_amount = $validated['target_amount'];
@@ -254,27 +187,18 @@ class CampaignController extends Controller
 
         $campaign->save();
 
-        return response()->json([
-            'success' => true,
-            'data' => $campaign->load('user'),
-            'message' => 'Campaign status updated successfully'
-        ]);
+        return (new CampaignResource($campaign->load('user')))
+            ->additional([
+                'success' => true,
+                'message' => 'Campaign status updated successfully'
+            ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, Campaign $campaign)
     {
-        $campaign = Campaign::find($id);
-
-        if (!$campaign) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Campaign not found'
-            ], 404);
-        }
-
         $user = $request->user();
         
         // Check authorization
