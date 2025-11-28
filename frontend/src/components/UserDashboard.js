@@ -55,7 +55,7 @@ const UserDashboard = () => {
 
       setStats({
         totalCampaigns: userCampaigns.length,
-        activeCampaigns: userCampaigns.filter((c) => c.is_active).length,
+        activeCampaigns: userCampaigns.filter((c) => c.status === 'approved').length,
         totalDonations: userDonations.length,
         totalAmount: userCampaigns.reduce(
           (sum, c) => sum + parseFloat(c.current_amount || 0),
@@ -94,55 +94,14 @@ const UserDashboard = () => {
     }
   }, [campaigns, donations]);
 
-  const promptForTargetAmount = (currentAmount) => {
-    const response = window.prompt(
-      "Enter a new target amount for this campaign (leave blank to keep current amount):",
-      currentAmount ? String(currentAmount) : ""
-    );
-
-    if (response === null) {
-      return null; // User cancelled
-    }
-
-    const trimmed = response.trim();
-
-    if (trimmed === "") {
-      return {};
-    }
-
-    const parsed = parseFloat(trimmed);
-
-    if (Number.isNaN(parsed) || parsed < 0) {
-      alert("Please provide a valid number for the target amount.");
-      return false;
-    }
-
-    return { target_amount: parsed };
-  };
-
-  const toggleCampaignStatus = async (campaign) => {
-    let payload = {};
-
-    if (!campaign.is_active) {
-      const result = promptForTargetAmount(campaign.target_amount);
-
-      if (result === null) {
-        return; // cancel
-      }
-
-      if (result === false) {
-        return; // invalid input handled
-      }
-
-      payload = result;
-    }
-
+  const deleteCampaign = async (campaign) => {
     try {
-      await campaignAPI.toggleStatus(campaign.id, payload);
-      alert('Campaign status updated successfully');
+      await campaignAPI.delete(campaign.id);
+      alert('Campaign deleted successfully');
       fetchAllCampaigns();
     } catch (err) {
-      alert('Failed to update campaign status');
+      alert('Failed to delete campaign');
+      console.error(err);
     }
   };
 
@@ -178,7 +137,8 @@ const UserDashboard = () => {
         <CampaignTable 
           campaigns={campaigns} 
           title="My Campaigns" 
-          onToggleStatus={toggleCampaignStatus}
+          onDelete={deleteCampaign}
+          isAdmin={false}
           emptyStateAction={
             <button 
               className="submit-btn"

@@ -4,8 +4,10 @@ import { formatAmount, formatDate } from '../utils/formatters';
 const CampaignTable = ({ 
   campaigns, 
   title = "All Campaigns", 
-  onToggleStatus, 
-  emptyStateAction 
+  onToggleStatus,
+  onDelete,
+  emptyStateAction,
+  isAdmin = false
 }) => {
   return (
     <div className="campaigns-table">
@@ -81,11 +83,9 @@ const CampaignTable = ({
                   </td>
                   <td>
                     <span
-                      className={`status-badge ${
-                        campaign.is_active ? "active" : "inactive"
-                      }`}
+                      className={`status-badge ${campaign.status}`}
                     >
-                      {campaign.is_active ? "Active" : "Inactive"}
+                      {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                     </span>
                   </td>
                   <td>
@@ -93,13 +93,64 @@ const CampaignTable = ({
                   </td>
                   <td>
                     <div className="action-buttons">
-                      <button
-                        className={`toggle-btn ${campaign.is_active ? 'deactivate' : 'activate'}`}
-                        onClick={() => onToggleStatus(campaign)}
-                        title={campaign.is_active ? 'Deactivate campaign' : 'Activate campaign'}
-                      >
-                        {campaign.is_active ? '🔒 Deactivate' : '🔓 Activate'}
-                      </button>
+                      {/* Admin-only approval buttons */}
+                      {isAdmin && (
+                        <>
+                          {campaign.status === 'pending' && (
+                            <>
+                              <button
+                                className="approve-btn"
+                                onClick={() => onToggleStatus(campaign, 'approved')}
+                                title="Approve campaign"
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                className="reject-btn"
+                                onClick={() => onToggleStatus(campaign, 'rejected')}
+                                title="Reject campaign"
+                              >
+                                ✕ Reject
+                              </button>
+                            </>
+                          )}
+                          {campaign.status === 'approved' && (
+                            <button
+                              className="reject-btn"
+                              onClick={() => onToggleStatus(campaign, 'rejected')}
+                              title="Reject campaign"
+                            >
+                              ✕ Reject
+                            </button>
+                          )}
+                          {campaign.status === 'rejected' && (
+                            <button
+                              className="approve-btn"
+                              onClick={() => onToggleStatus(campaign, 'approved')}
+                              title="Approve campaign"
+                            >
+                              ✓ Approve
+                            </button>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* User-only delete button */}
+                      {!isAdmin && onDelete && campaign.status !== 'approved' && (
+                        <button
+                          className="delete-btn"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this campaign?')) {
+                              onDelete(campaign);
+                            }
+                          }}
+                          title="Delete campaign"
+                        >
+                          🗑️ Delete
+                        </button>
+                      )}
+                      
+                      {campaign.status === 'approved' && (
                       <button
                         className="view-btn"
                         onClick={() =>
@@ -109,6 +160,7 @@ const CampaignTable = ({
                       >
                         👁️ View
                       </button>
+                      )}
                     </div>
                   </td>
                 </tr>

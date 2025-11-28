@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { campaignAPI } from '../services/api';
 
 const CreateCampaign = ({ onCampaignCreated }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -29,7 +31,7 @@ const CreateCampaign = ({ onCampaignCreated }) => {
     try {
       const response = await campaignAPI.create(formData);
       if (response.data.success) {
-        alert('Campaign created successfully!');
+        alert('Campaign created successfully and sent for approval!');
         setFormData({
           title: '',
           description: '',
@@ -42,6 +44,8 @@ const CreateCampaign = ({ onCampaignCreated }) => {
         if (onCampaignCreated) {
           onCampaignCreated(response.data.data);
         }
+        // Redirect to home page
+        navigate('/');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create campaign');

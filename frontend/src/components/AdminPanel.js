@@ -9,7 +9,7 @@ const AdminPanel = () => {
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("campaigns");
+  const [activeTab, setActiveTab] = useState("pending");
   const [stats, setStats] = useState({
     totalCampaigns: 0,
     activeCampaigns: 0,
@@ -52,7 +52,7 @@ const AdminPanel = () => {
 
         setStats({
           totalCampaigns: allCampaigns.length,
-          activeCampaigns: allCampaigns.filter((c) => c.is_active).length,
+          activeCampaigns: allCampaigns.filter((c) => c.status === 'approved').length,
           totalDonations: allDonations.length,
           totalAmount: allDonations.reduce(
             (sum, d) => sum + parseFloat(d.amount),
@@ -109,10 +109,11 @@ const AdminPanel = () => {
     return { target_amount: parsed };
   };
 
-  const toggleCampaignStatus = async (campaign) => {
+  const updateCampaignStatus = async (campaign, newStatus) => {
     let payload = {};
 
-    if (!campaign.is_active) {
+    // Prompt for target amount when approving
+    if (newStatus === 'approved') {
       const result = promptForTargetAmount(campaign.target_amount);
 
       if (result === null) {
@@ -127,16 +128,23 @@ const AdminPanel = () => {
     }
 
     try {
-      await campaignAPI.toggleStatus(campaign.id, payload);
-      alert('Campaign status updated successfully');
+      await campaignAPI.updateStatus(campaign.id, newStatus, payload);
+      alert(`Campaign ${newStatus} successfully`);
       fetchAllCampaigns();
+      fetchStats();
     } catch (err) {
-      alert('Failed to update campaign status');
+      alert(`Failed to ${newStatus} campaign`);
+      console.error(err);
     }
   };
 
   if (loading) return <div className="loading">Loading admin data...</div>;
   if (error) return <div className="error-message">{error}</div>;
+
+  // Filter campaigns by status
+  const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
+  const approvedCampaigns = campaigns.filter(c => c.status === 'approved');
+  const rejectedCampaigns = campaigns.filter(c => c.status === 'rejected');
 
   return (
     <div className="admin-panel">
@@ -148,10 +156,22 @@ const AdminPanel = () => {
       {/* Tab Navigation */}
       <div className="admin-tabs">
         <button
-          className={`tab-btn ${activeTab === "campaigns" ? "active" : ""}`}
-          onClick={() => setActiveTab("campaigns")}
+          className={`tab-btn ${activeTab === "pending" ? "active" : ""}`}
+          onClick={() => setActiveTab("pending")}
         >
-          Campaigns
+          Campaign Requests ({pendingCampaigns.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === "approved" ? "active" : ""}`}
+          onClick={() => setActiveTab("approved")}
+        >
+          Approved ({approvedCampaigns.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === "rejected" ? "active" : ""}`}
+          onClick={() => setActiveTab("rejected")}
+        >
+          Rejected ({rejectedCampaigns.length})
         </button>
         <button
           className={`tab-btn ${activeTab === "donations" ? "active" : ""}`}
@@ -161,12 +181,33 @@ const AdminPanel = () => {
         </button>
       </div>
 
-      {/* Campaigns Tab */}
-      {activeTab === "campaigns" && (
+      {/* Pending Campaigns Tab */}
+      {activeTab === "pending" && (
         <CampaignTable 
-          campaigns={campaigns} 
-          title="All Campaigns" 
-          onToggleStatus={toggleCampaignStatus}
+          campaigns={pendingCampaigns} 
+          title="Pending Campaign Requests" 
+          onToggleStatus={updateCampaignStatus}
+          isAdmin={true}
+        />
+      )}
+
+      {/* Approved Campaigns Tab */}
+      {activeTab === "approved" && (
+        <CampaignTable 
+          campaigns={approvedCampaigns} 
+          title="Approved Campaigns" 
+          onToggleStatus={updateCampaignStatus}
+          isAdmin={true}
+        />
+      )}
+
+      {/* Rejected Campaigns Tab */}
+      {activeTab === "rejected" && (
+        <CampaignTable 
+          campaigns={rejectedCampaigns} 
+          title="Rejected Campaigns" 
+          onToggleStatus={updateCampaignStatus}
+          isAdmin={true}
         />
       )}
 
