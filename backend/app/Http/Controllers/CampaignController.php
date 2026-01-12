@@ -16,7 +16,7 @@ class CampaignController extends Controller
     public function index()
     {
         $campaigns = Campaign::with(['donations', 'user'])
-            ->where('is_active', true)
+            ->where('status', 'approved')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -69,12 +69,16 @@ class CampaignController extends Controller
             $campaignData['user_id'] = $request->user()->id;
         }
 
+        // Default status is pending
+        $campaignData['status'] = 'pending';
+        $campaignData['is_active'] = false; // Pending campaigns are not active yet
+
         $campaign = Campaign::create($campaignData);
 
         return (new CampaignResource($campaign->load('user')))
             ->additional([
                 'success' => true,
-                'message' => 'Campaign created successfully'
+                'message' => 'Campaign created successfully and sent for approval'
             ]);
     }
 
@@ -95,7 +99,7 @@ class CampaignController extends Controller
     /**
      * Display the specified resource by slug.
      */
-    public function showBySlug(string $slug)
+    public function showBySlug(Request $request, string $slug)
     {
         $campaign = Campaign::with(['donations' => function($query) {
             $query->where('status', 'completed')->orderBy('created_at', 'desc');
@@ -106,6 +110,23 @@ class CampaignController extends Controller
                 'success' => false,
                 'message' => 'Campaign not found'
             ], 404);
+        }
+
+        $user = $request->user();
+        
+        // Allow viewing if:
+        // 1. Campaign is approved (public access)
+        // 2. User is the owner of the campaign
+        // 3. User is an admin
+        $canView = $campaign->status === 'approved' 
+                   || ($user && $user->id === $campaign->user_id)
+                   || ($user && $user->isAdmin());
+
+        if (!$canView) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Campaign is not available'
+            ], 403);
         }
 
         return (new CampaignResource($campaign))->additional([
@@ -128,15 +149,11 @@ class CampaignController extends Controller
             ], 403);
         }
 
-        // Only admin can change is_active status
         $updateData = $request->validated();
         
-        // Filter allowed fields if not admin? 
-        // The original code didn't explicitly filter based on role for fields, just is_active.
-        // But the validator in UpdateCampaignRequest includes is_active.
-        // We should probably check if user is admin before allowing is_active change.
-        
-        if (!$user->isAdmin() && isset($updateData['is_active'])) {
+        // Only admin can change status directly via update
+        if (!$user->isAdmin()) {
+             unset($updateData['status']);
              unset($updateData['is_active']);
         }
 
@@ -149,39 +166,31 @@ class CampaignController extends Controller
             ]);
     }
 
-
-
     /**
-     * Toggle campaign status (owner or admin)
+     * Update campaign status (admin only)
      */
-    public function toggleStatus(Request $request, Campaign $campaign)
+    public function updateStatus(Request $request, Campaign $campaign)
     {
         $user = $request->user();
         
-        if (!$user) {
+        if (!$user || !$user->isAdmin()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Authentication required'
-            ], 401);
-        }
-
-        // Check if user is admin or campaign owner
-        if (!$user->isAdmin() && $campaign->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to toggle this campaign status'
+                'message' => 'Unauthorized. Admin access required.'
             ], 403);
         }
 
         $validated = $request->validate([
+            'status' => ['required', 'in:pending,approved,rejected'],
             'target_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $newStatus = !$campaign->is_active;
+        $campaign->status = $validated['status'];
+        
+        // Sync is_active with status
+        $campaign->is_active = ($validated['status'] === 'approved');
 
-        $campaign->is_active = $newStatus;
-
-        if ($newStatus && array_key_exists('target_amount', $validated) && $validated['target_amount'] !== null) {
+        if (array_key_exists('target_amount', $validated) && $validated['target_amount'] !== null) {
             $campaign->target_amount = $validated['target_amount'];
         }
 
@@ -190,7 +199,7 @@ class CampaignController extends Controller
         return (new CampaignResource($campaign->load('user')))
             ->additional([
                 'success' => true,
-                'message' => 'Campaign status updated successfully'
+                'message' => 'Campaign status updated to ' . $campaign->status
             ]);
     }
 

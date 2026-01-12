@@ -50,8 +50,8 @@ export const campaignAPI = {
   // Delete campaign
   delete: (id) => api.delete(`/campaigns/${id}`),
 
-  // Toggle campaign status
-  toggleStatus: (id, data = {}) => api.post(`/campaigns/${id}/toggle-status`, data),
+  // Update campaign status
+  updateStatus: (id, status, data = {}) => api.put(`/campaigns/${id}/status`, { status, ...data }),
 };
 
 export const donationAPI = {

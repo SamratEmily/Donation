@@ -52,6 +52,14 @@ const CampaignDetail = () => {
       <div className="campaign-header">
         <h1>{campaign.title}</h1>
         <p className="campaign-subtitle">For Mankind</p>
+        
+        {/* Campaign Status Badge */}
+        <div className="campaign-status-container">
+          <span className={`status-badge ${campaign.status}`}>
+            {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+          </span>
+        </div>
+        
         {!campaign.is_active && (
           <div className="campaign-status closed">
             <span>⚠️ This campaign is closed</span>
@@ -102,13 +110,22 @@ const CampaignDetail = () => {
           </div>
 
           <div className="donation-actions">
-            {campaign.is_active ? (
+            {campaign.status === 'approved' && campaign.is_active ? (
               <button 
                 className="donate-btn large"
                 onClick={() => setShowDonationForm(true)}
               >
                 Donate Now
               </button>
+            ) : campaign.status === 'pending' ? (
+              <div className="campaign-closed-message">
+                <p>⏳ This campaign is pending admin approval.</p>
+                <p>Donations will be enabled once approved.</p>
+              </div>
+            ) : campaign.status === 'rejected' ? (
+              <div className="campaign-closed-message">
+                <p>❌ This campaign has been rejected.</p>
+              </div>
             ) : (
               <div className="campaign-closed-message">
                 <p>This campaign is no longer accepting donations.</p>

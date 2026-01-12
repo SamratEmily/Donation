@@ -50,7 +50,7 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="name">Full Name:</label>
+            <label htmlFor="name">User Name:</label>
             <input
               type="text"
               id="name"
@@ -58,7 +58,7 @@ const Register = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              placeholder="Enter your full name"
+              placeholder="Enter your User name"
             />
             {errors.name && <div className="field-error">{errors.name[0]}</div>}
           </div>
