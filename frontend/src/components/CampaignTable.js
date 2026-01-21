@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatAmount, formatDate } from '../utils/formatters';
 
 const CampaignTable = ({ 
@@ -9,6 +9,14 @@ const CampaignTable = ({
   emptyStateAction,
   isAdmin = false
 }) => {
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+
+  const closeModal = () => setSelectedCampaign(null);
+
+  const handleStatusChange = async (campaign, status) => {
+    await onToggleStatus(campaign, status);
+    closeModal();
+  };
   return (
     <div className="campaigns-table">
       <h3>{title}</h3>
@@ -93,6 +101,17 @@ const CampaignTable = ({
                   </td>
                   <td>
                     <div className="action-buttons">
+                      {/* Admin-only details button */}
+                      {isAdmin && (
+                        <button
+                          className="view-btn details-btn"
+                          onClick={() => setSelectedCampaign(campaign)}
+                          title="View campaign details"
+                        >
+                          📋 Details
+                        </button>
+                      )}
+
                       {/* Admin-only approval buttons */}
                       {isAdmin && (
                         <>
@@ -149,17 +168,31 @@ const CampaignTable = ({
                           🗑️ Delete
                         </button>
                       )}
+                      {!isAdmin && onDelete && campaign.status === 'approved' && (
+                        <button
+                          className="delete-btn"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this campaign?')) {
+                              onDelete(campaign);
+                            }
+                          }}
+                          title="Delete campaign"
+                        >
+                          🗑️ Delete
+                        </button>
+                        
+                      )}
                       
                       {campaign.status === 'approved' && (
-                      <button
-                        className="view-btn"
-                        onClick={() =>
-                          window.open(`/campaign/${campaign.slug}`, "_blank")
-                        }
-                        title="View campaign"
-                      >
-                        👁️ View
-                      </button>
+                        <button
+                          className="view-btn"
+                          onClick={() =>
+                            window.open(`/campaign/${campaign.slug}`, "_blank")
+                          }
+                          title="View campaign"
+                        >
+                          👁️ View
+                        </button>
                       )}
                     </div>
                   </td>
@@ -168,6 +201,75 @@ const CampaignTable = ({
             })}
           </tbody>
         </table>
+      )}
+
+      {/* Admin Modal */}
+      {isAdmin && selectedCampaign && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content campaign-details-modal" onClick={e => e.stopPropagation()}>
+            <button className="close-btn" onClick={closeModal}>&times;</button>
+            <h2>Campaign Details</h2>
+            
+            <div className="modal-body">
+              <div className="detail-section">
+                <h4>Basic Information</h4>
+                <p><strong>Title:</strong> {selectedCampaign.title}</p>
+                <p><strong>Slug:</strong> {selectedCampaign.slug}</p>
+                <p><strong>Status:</strong> <span className={`status-badge ${selectedCampaign.status}`}>{selectedCampaign.status}</span></p>
+                <p><strong>Created At:</strong> {formatDate(selectedCampaign.created_at)}</p>
+              </div>
+
+              <div className="detail-section">
+                <h4>Financial Goal</h4>
+                <p><strong>Target Amount:</strong> {formatAmount(selectedCampaign.target_amount)}</p>
+                <p><strong>Current Amount:</strong> {formatAmount(selectedCampaign.current_amount)}</p>
+                <div className="progress-bar small">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${Math.min(100, (selectedCampaign.current_amount / selectedCampaign.target_amount) * 100)}%`,
+                      backgroundColor: selectedCampaign.current_amount >= selectedCampaign.target_amount ? "#28a745" : "",
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h4>Description</h4>
+                <div className="campaign-description-text">
+                  {selectedCampaign.description}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h4>Creator Details</h4>
+                <p><strong>Name:</strong> {selectedCampaign.creator_name}</p>
+                <p><strong>Email:</strong> {selectedCampaign.creator_email}</p>
+                {selectedCampaign.creator_phone && <p><strong>Phone:</strong> {selectedCampaign.creator_phone}</p>}
+              </div>
+
+              <div className="modal-actions">
+                {selectedCampaign.status !== 'approved' && (
+                  <button 
+                    className="approve-btn" 
+                    onClick={() => handleStatusChange(selectedCampaign, 'approved')}
+                  >
+                    ✓ Approve Campaign
+                  </button>
+                )}
+                {selectedCampaign.status !== 'rejected' && (
+                  <button 
+                    className="reject-btn" 
+                    onClick={() => handleStatusChange(selectedCampaign, 'rejected')}
+                  >
+                    ✕ Reject Campaign
+                  </button>
+                )}
+                <button className="cancel-btn" onClick={closeModal}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

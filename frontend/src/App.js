@@ -96,7 +96,7 @@ function AppContent() {
         </main>
 
         <footer className="app-footer">
-          <p>&copy; 2025 Donation Platform - Helping people help people</p>
+          <p>&copy; {new Date().getFullYear()} Donation Platform - Helping people help people</p>
         </footer>
       </div>
     </Router>
