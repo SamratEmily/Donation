@@ -10,7 +10,7 @@ backend/storage/framework/views/*
 frontend/node_modules
 frontend/build
 Dockerfile
-docker
 .env
+
 .env.backup
 .DS_Store
