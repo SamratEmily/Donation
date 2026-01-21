@@ -400,11 +400,70 @@ body {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  max-width: 500px;
+  max-width: 600px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.campaign-details-modal h2 {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #eee;
+  color: #333;
+}
+
+.detail-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.detail-section h4 {
+  margin-bottom: 0.75rem;
+  color: #667eea;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.detail-section p {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.campaign-description-text {
+  white-space: pre-wrap;
+  color: #444;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #eee;
+}
+
+.modal-actions .approve-btn,
+.modal-actions .reject-btn,
+.modal-actions .cancel-btn {
+  padding: 0.8rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+.details-btn {
+  background-color: #667eea !important;
+  color: white !important;
+}
+
+.details-btn:hover {
+  background-color: #5567d5 !important;
 }
 
 .close-btn {
