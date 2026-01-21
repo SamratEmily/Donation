@@ -1,0 +1,28 @@
+:8080 {
+    root * /app/public
+    encode zstd gzip
+
+    # Handle static files directly
+    file_server
+
+    # Handle API requests - send to Laravel's index.php
+    @api {
+        path /api*
+        # Add other Laravel routes that should NOT be handled by React SPA
+        path /sanctum/*
+        path /_debugbar/*
+        path /telescope/*
+    }
+    rewrite @api /index.php
+
+    # Handle React SPA - try path, then fallback to index.html
+    # This must come after the @api rewrite
+    @spa {
+        not path /api*
+        not file {path}
+    }
+    rewrite @spa /index.html
+
+    # Execute PHP for any requests that ended up at index.php
+    php_server
+}

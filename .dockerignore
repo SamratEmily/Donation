@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+backend/node_modules
+backend/vendor
+backend/storage/*.log
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+frontend/node_modules
+frontend/build
+Dockerfile
+docker
+.env
+.env.backup
+.DS_Store
