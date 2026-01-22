@@ -1,4 +1,5 @@
-:8080 {
+:{$PORT} {
+
     root * /app/public
     encode zstd gzip
 

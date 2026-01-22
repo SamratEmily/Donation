@@ -57,12 +57,13 @@ RUN chown -R www-data:www-data storage bootstrap/cache && \
 
 # Set environment variables for FrankenPHP
 ENV PORT=8080
-ENV SERVER_NAME=:8080
+ENV SERVER_NAME=:${PORT}
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 
 EXPOSE 8080
 
 # Command to run migrations and start the server
-# We use '&&' to ensure migrations succeed before starting
-CMD ["sh", "-c", "php artisan migrate --force && frankenphp run --config /etc/caddy/Caddyfile"]
+# We use ';' to ensure the server starts even if migrations fail (which prevents 502 Boot Loops)
+CMD ["sh", "-c", "php artisan migrate --force; frankenphp run --config /etc/caddy/Caddyfile"]
+
