@@ -13,12 +13,25 @@ class CampaignController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $campaigns = Campaign::with(['donations', 'user'])
-            ->where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $perPage = $request->input('per_page', 15); // Default to 15 items
+        $search = $request->input('search');
+
+        $query = Campaign::with(['donations', 'user'])
+            ->where('status', 'approved');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('creator_name', 'like', "%{$search}%")
+                  ->orWhere('creator_phone', 'like', "%{$search}%");
+            });
+        }
+
+        $campaigns = $query->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate($perPage);
 
         return CampaignResource::collection($campaigns)->additional([
             'success' => true

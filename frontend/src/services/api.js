@@ -33,7 +33,11 @@ api.interceptors.response.use(
 
 export const campaignAPI = {
   // Get all campaigns
-  getAll: () => api.get('/campaigns'),
+  getAll: (page = 1, search = '') => {
+    const params = { page };
+    if (search) params.search = search;
+    return api.get('/campaigns', { params });
+  },
   
   // Get campaigns requiring authentication (admin/all users)
   getAllWithAuth: () => api.get('/campaigns/all'),
