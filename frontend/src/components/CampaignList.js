@@ -238,7 +238,8 @@ const CampaignList = ({ onCampaignSelect }) => {
                   </div>
                   
                   <div className="campaign-meta">
-                    <p><strong>Organizer:</strong> {campaign.creator_name}</p>
+                    <p><strong>Organizer:</strong> {campaign.user ? campaign.user.name : campaign.creator_name}</p>
+                    <p><strong>Email:</strong> {campaign.user ? campaign.user.email : campaign.creator_email}</p>
                     <p><strong>Payment Method:</strong> {campaign.payment_type.toUpperCase()}</p>
                     {campaign.creator_phone && (
                       <p><strong>Phone:</strong> {campaign.creator_phone}</p>

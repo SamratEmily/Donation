@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { campaignAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreateCampaign = ({ onCampaignCreated }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    creator_name: '',
-    creator_email: '',
     creator_phone: '',
     target_amount: '',
     payment_type: 'bkash'
@@ -29,14 +30,13 @@ const CreateCampaign = ({ onCampaignCreated }) => {
     setError('');
 
     try {
+      // Backend automatically uses authenticated user's name/email
       const response = await campaignAPI.create(formData);
       if (response.data.success) {
         alert('Campaign created successfully and sent for approval!');
         setFormData({
           title: '',
           description: '',
-          creator_name: '',
-          creator_email: '',
           creator_phone: '',
           target_amount: '',
           payment_type: 'bkash'
@@ -58,6 +58,11 @@ const CreateCampaign = ({ onCampaignCreated }) => {
     <div className="create-campaign">
       <h2>Create New Donation Campaign</h2>
       {error && <div className="error-message">{error}</div>}
+      
+      <div className="user-info-banner" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '8px' }}>
+        <p style={{ margin: 0 }}><strong>Creating as:</strong> {user?.name}</p>
+        <p style={{ margin: '5px 0 0' }}><strong>Email:</strong> {user?.email}</p>
+      </div>
       
       <form onSubmit={handleSubmit} className="campaign-form">
         <div className="form-group">
@@ -89,38 +94,6 @@ const CreateCampaign = ({ onCampaignCreated }) => {
             required
             rows="4"
             placeholder="Describe your cause and why people should donate..."
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="creator_name">
-            Your Name
-            <span className="required-indicator">*</span>
-          </label>
-          <input
-            type="text"
-            id="creator_name"
-            name="creator_name"
-            value={formData.creator_name}
-            onChange={handleChange}
-            required
-            placeholder="Your full name"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="creator_email">
-            Your Email
-            <span className="required-indicator">*</span>
-          </label>
-          <input
-            type="email"
-            id="creator_email"
-            name="creator_email"
-            value={formData.creator_email}
-            onChange={handleChange}
-            required
-            placeholder="your.email@example.com"
           />
         </div>
 

@@ -101,8 +101,8 @@ const CampaignDetail = () => {
 
           <div className="campaign-organizer">
             <h3>Organizer</h3>
-            <p><strong>Name:</strong> {campaign.creator_name}</p>
-            <p><strong>Email:</strong> {campaign.creator_email}</p>
+            <p><strong>Name:</strong> {campaign.user ? campaign.user.name : campaign.creator_name}</p>
+            <p><strong>Email:</strong> {campaign.user ? campaign.user.email : campaign.creator_email}</p>
             {campaign.creator_phone && (
               <p><strong>Phone:</strong> {campaign.creator_phone}</p>
             )}

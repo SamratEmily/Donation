@@ -77,9 +77,11 @@ class CampaignController extends Controller
     {
         $campaignData = $request->validated();
         
-        // Add user_id if authenticated
+        // Add user_id and override creator details if authenticated
         if ($request->user()) {
             $campaignData['user_id'] = $request->user()->id;
+            $campaignData['creator_name'] = $request->user()->name;
+            $campaignData['creator_email'] = $request->user()->email;
         }
 
         // Default status is pending
