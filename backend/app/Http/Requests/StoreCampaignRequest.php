@@ -24,8 +24,8 @@ class StoreCampaignRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'creator_name' => 'required|string|max:255',
-            'creator_email' => 'required|email|max:255',
+            'creator_name' => 'nullable|string|max:255',
+            'creator_email' => 'nullable|email|max:255',
             'creator_phone' => 'required|string|max:20',
             'target_amount' => 'required|numeric|min:0',
             'payment_type' => 'required|in:bkash,nagad,rocket,bank'
